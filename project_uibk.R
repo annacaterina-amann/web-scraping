@@ -69,11 +69,43 @@ print(lv_numbers)
 #zusaetzlich den Titel ausgeben
 #html_text(html_nodes(html2, xpath = "//div[@class='lv-title']"))
 
-
-##############################
+#############################
 #########urls generieren#####
 ############################
 
-url_vector <- c((paste("https://lfuonline.uibk.ac.at/public/lfuonline_lv.details?sem_id_in=22W&lvnr_id_in=",lv_numbers)))
+url_vector <- c((paste("https://lfuonline.uibk.ac.at/public/lfuonline_lv.details?sem_id_in=22W&lvnr_id_in=",lv_numbers, sep = "")))
 
 url_vector
+
+####scraping data from one  lv####
+
+course_1 <- read_html("https://lfuonline.uibk.ac.at/public/lfuonline_lv.details?sem_id_in=22W&lvnr_id_in=621009")
+
+html_text(html_nodes(course_1,xpath = "//div[./label ='Titel:']/following-sibling::div"))
+html_text(html_nodes(course_1,xpath = "//div[./label ='Inhalt:']/following-sibling::div"))
+
+####put in a dataframe, pro Kurs eine Zeile, Attribute in Spalten####
+
+##all courses###
+
+require(httr)
+library('xml2')
+library("writexl")
+
+dataframe_courses <- tibble()
+source("https://raw.githubusercontent.com/ArminHaberl/Course_Scraping/main/One_Course_Scraping.R")
+
+for (course_ID in url_vector){
+  new_course <- scrape_data(course_ID)
+  dataframe_courses <<- bind_rows(dataframe_courses,new_course)
+  Sys.sleep(0.1)
+  
+  break;
+ 
+}
+
+write_xlsx(dataframe_courses,"courses.xlsx")
+
+
+
+
