@@ -2,12 +2,6 @@ if (!require("pacman")) install.packages("pacman") #Installs package for package
 
 pacman::p_load("tidyverse","rvest","stringr","stringr", "rebus", "lubridate", "xml2", "dplyr", "stringr", "purrr", "RSelenium")  #Loads packages and installs if they are not found
 
-library(tidyverse)
-library(rvest)
-library(stringr)
-library(rebus)
-library(lubridate)
-library(dplyr)
 
 ########################
 ####scrape lv-numbers####
@@ -17,16 +11,11 @@ library(dplyr)
 #rD <- RSelenium::rsDriver() # This might throw an error
 
 # Start Selenium server and browser
-rD <- RSelenium::rsDriver(browser = "firefox", port = 4838L)
-
-#rD <- driver = rsDriver(port = 4842L, browser = c("firefox"))
-
-
-
+rD <- RSelenium::rsDriver(browser = "firefox", port = 4828L)
 # Assign the client to an object
 remDr <- rD[["client"]]
 
-remDr$navigate("https://lfuonline.uibk.ac.at/public/lfuonline_lv.home")
+remDr$navigate("https://lfuonline.uibk.ac.at/public/lfuonline_lv.home?sem_id_in=22W&suche_in=")
 
 faculties <- remDr$findElements(using = "xpath", value = "//div[@class='xnode level1']")
 
@@ -37,27 +26,35 @@ Sys.sleep(1)
 for (faculty in faculties) {
   faculty$clickElement()
   
-  Sys.sleep(0.2)
+  Sys.sleep(0.1)
   
   studies <- remDr$findElements(using = "xpath", value = "//div[@class='xnode level2']")
   
   for (study in studies) {
     study$clickElement()
     
-    Sys.sleep(0.2)
+    Sys.sleep(0.1)
     
     modules <- remDr$findElements(using = "xpath", value = "//div[@class='xnode level3']")
     
     for (module in modules) {
       module$clickElement()
       
-      Sys.sleep(0.2)
+      Sys.sleep(0.1)
       
       subModules <- remDr$findElements(using = "xpath", value = "//div[@class='xnode level4']")
       
       for (subModule in subModules) {
         subModule$clickElement()
         
+        Sys.sleep(0.1)
+        
+        subsubModules <- remDr$findElements(using = "xpath", value = "//div[@class='xnode level5']")
+        
+        for (subsubModule in subsubModules) {
+          subsubModule$clickElement()
+          
+        }
         #break;
       }
       
@@ -76,35 +73,34 @@ html2 <- read_html(html)
 lv_numbers <- c(html_text(html_nodes(html2, xpath = "//div[@class='lv-no']")))
 print(lv_numbers)
 
-#zusaetzlich den Titel ausgeben
-html_text(html_nodes(html2, xpath = "//div[@class='lv-title']"))
 
 
-##############################
-#########urls generieren#####
-############################
 
-url_vector <- c((paste("https://lfuonline.uibk.ac.at/public/lfuonline_lv.details?sem_id_in=22W&lvnr_id_in=",lv_numbers, sep="")))
 
-url_vector
+#################
+###create urls###
+#################
 
-show(url_vector)
+url_vector <- c((paste("https://lfuonline.uibk.ac.at/public/lfuonline_lv.details?sem_id_in=22W&lvnr_id_in=",lv_numbers, sep = "")))
 
-#Creating a loop where he goes through all url of uni-insbruck courses
 
-#Extract the min and max lv_number
-#min <- min(lv_numbers)
-#max <- max(lv_numbers)
+
+####put in a dataframe, pro Kurs eine Zeile, Attribute in Spalten####
+
+#Creating a loop where he goes through all url of uni-innsbruck courses
+
 
 # you have do define an empty data frame --> otherwise the colums in the loop data.frame don´t match
 sum_courses = data.frame()
 
+
 #Creating a loop for all course pages of uni-Insb starting with the min lv_number in +1 steps till the max
-for(page_result in lv_numbers)   {
+
+for(page_result in url_vector)   {
   print(paste("Page:", page_result))
   #the link needs to be adjusted with the course number
-  link = paste("https://lfuonline.uibk.ac.at/public/lfuonline_lv.details?sem_id_in=22W&lvnr_id_in=",page_result,sep="")
-  page = read_html(link)
+  #link = paste("https://lfuonline.uibk.ac.at/public/lfuonline_lv.details?sem_id_in=22W&lvnr_id_in=",page_result,sep="")
+  page = read_html(page_result)
   # I used the selector gadget of chrome to chose the right html_nodes
   course_number = page %>% html_node(xpath = "//div[./label ='LV-Nummer:']/following-sibling::div") %>% html_text()
   course_name = page %>% html_node(xpath = "//div[./label ='Titel:']/following-sibling::div") %>% html_text()
@@ -115,25 +111,27 @@ for(page_result in lv_numbers)   {
   language = page %>% html_node(xpath = "//div[./label ='Unterrichtssprache:']/following-sibling::div") %>% html_text()
   learning_result = page %>% html_node(xpath = "//div[./label ='Lernergebnis:']/following-sibling::div") %>% html_text()
   content = page %>% html_node(xpath = "//div[./label ='Inhalt:']/following-sibling::div") %>% html_text()
-  method = page %>% html_node(".form-group:nth-child(17) > div.col-sm-9") %>% html_text()
-  exam_mode = page %>% html_node(".form-group:nth-child(18) > div.col-sm-9") %>% html_text()
-  literature = page %>% html_node(".form-group:nth-child(19) > div.col-sm-9") %>% html_text()
-  requirements = page %>% html_node(".form-group:nth-child(20) > div.col-sm-9") %>% html_text()
+  method = page %>% html_node(xpath = "//div[./label ='Methoden:']/following-sibling::div") %>% html_text()
+  exam_mode = page %>% html_node(xpath = "//div[./label ='Prüfungsmodus:']/following-sibling::div") %>% html_text()
+  literature = page %>% html_node(xpath = "//div[./label ='Literatur:']/following-sibling::div") %>% html_text()
+  requirements = page %>% html_node(xpath = "//div[./label ='Voraussetzungen:']/following-sibling::div") %>% html_text()
   
   #no double entries with unique and NAs shall be excluded
-  sum_courses = rbind(sum_courses, data.frame(course_number,course_name, semester,institute,ECTS,repetition, language,learning_result, content, method,exam_mode, literature,requirements,  stringsAsFactors=TRUE))
+  sum_courses = rbind(sum_courses, data.frame(course_number,course_name, semester,institute,ECTS,repetition, language,learning_result, content, method, exam_mode, literature,requirements,  stringsAsFactors=TRUE))
+  
   
   
 }
 
+
 #checking for duplicates
 
-duplicated(sorted_courses)
-sum(duplicated(sorted_courses))
+duplicated(sum_courses)
+sum(duplicated(sum_courses))
 
 #removing duplicate data
-sum_courses_cleaned = data.frame()
-sum_courses_cleaned <- distinct(sorted_courses, course_number, .keep_all = TRUE)
+
+sum_courses_cleaned <- distinct(sum_courses, course_number, .keep_all = TRUE)
 
 #remove empty data
 sum_courses_fullrecords = data_frame()
