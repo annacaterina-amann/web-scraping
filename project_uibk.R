@@ -136,3 +136,32 @@ sum_courses_cleaned <- distinct(sum_courses, course_number, .keep_all = TRUE)
 #remove empty data
 sum_courses_fullrecords = data_frame()
 sum_courses_fullrecords <- sum_courses_cleaned[complete.cases(sum_courses_cleaned), ]
+
+#statistics for only completly full records
+sum_courses_fullrecords$ECTS <- as.numeric(sum_courses_fullrecords$ECTS)
+mean(sum_courses_fullrecords$ECTS)
+
+pie(table(sum_courses_fullrecords$institute))
+barplot(table(sum_courses_fullrecords$repetition))
+barplot(table(sum_courses_cleaned$language))
+
+#statistics for cleaned records (only cleaned for ECTS)
+cleanedECTS = data.frame()
+cleanedECTS <- sum_courses_cleaned [!is.na(sum_courses_cleaned$ECTS),]
+cleanedECTS$ECTS <- as.numeric(cleanedECTS$ECTS)
+mean(cleanedECTS$ECTS)
+
+#statistics for cleaned records (only cleaned for institute)
+cleanedInstitute = data.frame()
+cleanedInstitute <- sum_courses_cleaned [!is.na(sum_courses_cleaned$institute),]
+pie(table(cleanedInstitute$institute))
+
+#statistics for cleaned records (only cleaned for repetition)
+cleanedRepetition = data.frame()
+cleanedRepetition <- sum_courses_cleaned [!is.na(sum_courses_cleaned$repetition),]
+barplot(table(cleanedRepetition$repetition))
+
+#statistics for cleaned records (only cleaned for language)
+cleanedLanguage = data.frame()
+cleanedLanguage <- sum_courses_cleaned [!is.na(sum_courses_cleaned$language),]
+barplot(table(cleanedLanguage$language))
